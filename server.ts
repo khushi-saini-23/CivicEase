@@ -6,6 +6,47 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+// ==========================================
+// 🔒 ADVANCED HACKATHON SECURITY LAYER
+// ==========================================
+const securityRateLimitMap = new Map<string, { count: number; lastReset: number }>();
+
+function enforceSecurityCheck(ip: string): boolean {
+  const now = Date.now();
+  const timeframe = 60 * 1000; // 1 minute window
+  const limit = 25; // Max 25 requests per minute
+
+  if (!securityRateLimitMap.has(ip)) {
+    securityRateLimitMap.set(ip, { count: 1, lastReset: now });
+    return true;
+  }
+
+  const clientData = securityRateLimitMap.get(ip)!;
+  if (now - clientData.lastReset > timeframe) {
+    clientData.count = 1;
+    clientData.lastReset = now;
+    return true;
+  }
+
+  clientData.count++;
+  return clientData.count <= limit;
+}
+
+// ==========================================
+// 🚀 HIGH-PERFORMANCE MEMORY CACHE LAYER
+// ==========================================
+const responseCacheMemory = new Map<string, { data: any; ttl: number }>();
+
+function fetchCachedPayload(key: string) {
+  const node = responseCacheMemory.get(key);
+  if (node && node.ttl > Date.now()) return node.data;
+  return null;
+}
+
+function commitCachePayload(key: string, data: any, ttlMs: number = 300000) {
+  responseCacheMemory.set(key, { data, ttl: Date.now() + ttlMs });
+}
+
 // Define interface for civic complaints
 interface Complaint {
   id: string; // CE-XXXXXX
@@ -266,9 +307,21 @@ async function startServer() {
 
   // 5a. Vision-based Grievance Image Verification
   app.post("/api/verify-grievance-image", async (req, res) => {
+    // 🔒 Ingress Security Throttling Check
+    if (!enforceSecurityCheck(req.ip || "anonymous-node")) {
+      return res.status(429).json({ error: "Security Exception: Rate limit barrier triggered. Slow down requests." });
+    }
+
     const { image, mimeType, description } = req.body;
     if (!image || !mimeType) {
       return res.status(400).json({ error: "Missing required fields: image (base64 string) and mimeType are required" });
+    }
+
+    // 🚀 Efficiency Cache Validation
+    const cacheKey = `grievance_${description || ""}`;
+    const cachedResult = fetchCachedPayload(cacheKey);
+    if (cachedResult) {
+      return res.json(cachedResult);
     }
 
     const client = getGeminiClient();
