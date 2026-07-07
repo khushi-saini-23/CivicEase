@@ -1,0 +1,6 @@
+{
+  "name": "CivicEase",
+  "description": "Empathetic GenAI Civic Companion helping citizens navigate complex government services, simplify bureaucratic jargon, and track public complaints.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
